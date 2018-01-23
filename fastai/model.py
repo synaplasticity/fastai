@@ -53,12 +53,11 @@ class Stepper():
         if isinstance(preds,(tuple,list)): preds=preds[0]
         return preds, self.crit(preds, y)
 
-from . import lm_rnn
 def set_train_mode(m):
-    #if ((hasattr(m, 'running_mean') or isinstance(m, (nn.Dropout, lm_rnn.LockedDropout)))
-    if (hasattr(m, 'running_mean')
-        and (getattr(m,'bn_freeze',False) or not getattr(m,'trainable',False))):
-        m.eval()
+    if (hasattr(m, 'running_mean') and (getattr(m,'bn_freeze',False)
+              or not getattr(m,'trainable',False))): m.eval()
+    elif (getattr(m,'drop_freeze',False) and hasattr(m, 'p')
+          and ('drop' in type(m).__name__.lower())): m.eval()
     else: m.train()
 
 
@@ -79,6 +78,8 @@ def fit(model, data, epochs, opt, crit, metrics=None, callbacks=None, **kwargs):
     avg_mom=0.98
     batch_num,avg_loss=0,0.
     for cb in callbacks: cb.on_train_begin()
+    
+    names = ["train_loss","val_loss"] + [f.__name__ for f in metrics]
 
     for epoch in tnrange(epochs, desc='Epoch'):
         stepper.reset(True)
@@ -95,7 +96,8 @@ def fit(model, data, epochs, opt, crit, metrics=None, callbacks=None, **kwargs):
             if stop: return
 
         vals = validate(stepper, data.val_dl, metrics)
-        print(np.round([epoch, debias_loss] + vals, 6))
+        print_stats(epoch, names, [debias_loss] + vals)
+        
         stop=False
         for cb in callbacks: stop = stop or cb.on_epoch_end(vals)
         if stop: break
@@ -103,6 +105,11 @@ def fit(model, data, epochs, opt, crit, metrics=None, callbacks=None, **kwargs):
     for cb in callbacks: cb.on_train_end()
 
 
+def print_stats(epoch, names, values):
+    print_str = "{}: {:3d}, ".format("epoch",epoch)
+    print_str += ', '.join(("{}: {:.6f}".format(n, v) for (n, v) in zip(names, values)))
+    print(print_str)    
+    
 def validate(stepper, dl, metrics):
     loss,res = [],[]
     stepper.reset(False)
