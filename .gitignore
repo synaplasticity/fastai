@@ -109,6 +109,7 @@ ENV/
 .mypy_cache/
 
 .vscode
+*.swp
 
 # osx generated files
 .DS_Store
