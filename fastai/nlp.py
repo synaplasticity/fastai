@@ -162,13 +162,13 @@ class RNN_Learner(Learner):
 
 
 class ConcatTextDataset(torchtext.data.Dataset):
-    def __init__(self, path, text_field, newline_eos=True, **kwargs):
+    def __init__(self, path, text_field, newline_eos=True, encoding='utf-8', **kwargs):
         fields = [('text', text_field)]
         text = []
         if os.path.isdir(path): paths=glob(f'{path}/*.*')
         else: paths=[path]
         for p in paths:
-            for line in open(p): text += text_field.preprocess(line)
+            for line in open(p, encoding=encoding): text += text_field.preprocess(line)
             if newline_eos: text.append('<eos>')
 
         examples = [torchtext.data.Example.fromlist([text], fields)]
@@ -318,7 +318,7 @@ class TextDataLoader():
         it = iter(self.src)
         for i in range(len(self)):
             b = next(it)
-            yield getattr(b, self.x_fld), getattr(b, self.y_fld)
+            yield getattr(b, self.x_fld).data, getattr(b, self.y_fld).data
 
 
 class TextModel(BasicModel):
