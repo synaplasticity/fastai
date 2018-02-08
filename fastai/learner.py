@@ -62,6 +62,7 @@ class Learner():
     def get_model_path(self, name): return os.path.join(self.models_path,name)+'.h5'
     def save(self, name): save_model(self.model, self.get_model_path(name))
     def load(self, name): load_model(self.model, self.get_model_path(name))
+    def load_from_file(self, fname): load_model(self.model, fname)
 
     def set_data(self, data): self.data_ = data
 
