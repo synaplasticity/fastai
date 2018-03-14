@@ -27,7 +27,7 @@ def resize_img(fname, targ, path, new_path):
 def resize_imgs(fnames, targ, path, new_path):
     if not os.path.exists(os.path.join(path,new_path,str(targ),fnames[0])):
         with ThreadPoolExecutor(8) as e:
-            ims = e.map(lambda x: resize_img(x, targ, path, 'tmp'), fnames)
+            ims = e.map(lambda x: resize_img(x, targ, path, new_path), fnames)
             for x in tqdm(ims, total=len(fnames), leave=False): pass
     return os.path.join(path,new_path,str(targ))
 
@@ -88,7 +88,7 @@ def copy_or_move_with_subdirs(subdir_lst, src, dst, r, move=False):
             do(f, os.path.join(dst, subdir, os.path.split(f)[1]))
 
 def n_hot(ids, c):
-    res = np.zeros((c,), dtype=np.float32)
+    res = np.zeros((c,), dtype=np.int8)
     res[ids] = 1
     return res
 
@@ -201,7 +201,9 @@ def open_image(fn):
         raise OSError('Is a directory: {}'.format(fn))
     else:
         try:
-            return cv2.cvtColor(cv2.imread(str(fn), flags), cv2.COLOR_BGR2RGB).astype(np.float32)/255
+            im = cv2.imread(str(fn), flags).astype(np.float32)/255
+            if im is None: raise OSError(f'File not recognized by opencv: {fn}')
+            return cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         except Exception as e:
             raise OSError('Error handling image at: {}'.format(fn)) from e
 
