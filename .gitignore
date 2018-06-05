@@ -3,6 +3,7 @@ submission1.csv
 .pypirc
 ~*
 tmp*
+sample_data/
 tags
 data
 
@@ -118,3 +119,6 @@ ENV/
 ehthumbs.db
 Thumbs.db
 .idea
+
+# pytest
+.pytest_cache
