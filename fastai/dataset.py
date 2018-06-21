@@ -55,10 +55,13 @@ def read_dir(path, folder):
     """ Returns a list of relative file paths to `path` for all files within `folder` """
     full_path = os.path.join(path, folder)
     fnames = glob(f"{full_path}/*.*")
+    directories = glob(f"{full_path}/*/")
     if any(fnames):
         return [os.path.relpath(f,path) for f in fnames]
+    elif any(directories):
+        raise FileNotFoundError("{} has subdirectories but contains no files. Is your directory structure is correct?".format(full_path))
     else:
-        raise FileNotFoundError("{} folder doesn't exist or is empty".format(folder))
+        raise FileNotFoundError("{} folder doesn't exist or is empty".format(full_path))
 
 def read_dirs(path, folder):
     '''
@@ -70,8 +73,9 @@ def read_dirs(path, folder):
         if lbl not in ('.ipynb_checkpoints','.DS_Store'):
             all_lbls.append(lbl)
             for fname in os.listdir(os.path.join(full_path, lbl)):
-                fnames.append(os.path.join(folder, lbl, fname))
-                lbls.append(lbl)
+                if fname not in ('.DS_Store'):
+                    fnames.append(os.path.join(folder, lbl, fname))
+                    lbls.append(lbl)
     return fnames, lbls, all_lbls
 
 def n_hot(ids, c):
@@ -110,12 +114,9 @@ def parse_csv_labels(fn, skip_header=True, cat_separator = ' '):
         skip_header: A boolean flag indicating whether to skip the header.
 
     Returns:
-        a four-tuple of (
-            sorted image filenames,
-            a dictionary of filenames and corresponding labels,
-            a sorted set of unique labels,
-            a dictionary of labels to their corresponding index, which will
-            be one-hot encoded.
+        a two-tuple of (
+            image filenames,
+            a dictionary of filenames and corresponding labels
         )
     .
     :param cat_separator: the separator for the categories column
@@ -123,11 +124,11 @@ def parse_csv_labels(fn, skip_header=True, cat_separator = ' '):
     df = pd.read_csv(fn, index_col=0, header=0 if skip_header else None, dtype=str)
     fnames = df.index.values
     df.iloc[:,0] = df.iloc[:,0].str.split(cat_separator)
-    return sorted(fnames), list(df.to_dict().values())[0]
+    return fnames, list(df.to_dict().values())[0]
 
 def nhot_labels(label2idx, csv_labels, fnames, c):
-    
-    all_idx = {k: n_hot([label2idx[o] for o in v], c)
+			    
+    all_idx = {k: n_hot([label2idx[o] for o in ([] if type(v) == float else v)], c)
                for k,v in csv_labels.items()}
     return np.stack([all_idx[o] for o in fnames])
 
@@ -136,7 +137,7 @@ def csv_source(folder, csv_file, skip_header=True, suffix='', continuous=False):
     return dict_source(folder, fnames, csv_labels, suffix, continuous)
 
 def dict_source(folder, fnames, csv_labels, suffix='', continuous=False):
-    all_labels = sorted(list(set(p for o in csv_labels.values() for p in o)))
+    all_labels = sorted(list(set(p for o in csv_labels.values() for p in ([] if type(o) == float else o))))
     full_names = [os.path.join(folder,str(fn)+suffix) for fn in fnames]
     if continuous:
         label_arr = np.array([np.array(csv_labels[i]).astype(np.float32)
@@ -149,7 +150,7 @@ def dict_source(folder, fnames, csv_labels, suffix='', continuous=False):
     return full_names, label_arr, all_labels
 
 class BaseDataset(Dataset):
-    """An abstract class representing a fastai dataset, it extends torch.utils.data.Dataset."""
+    """An abstract class representing a fastai dataset. Extends torch.utils.data.Dataset."""
     def __init__(self, transform=None):
         self.transform = transform
         self.n = self.get_n()
@@ -225,7 +226,12 @@ def open_image(fn):
         #if len(res.shape)==2: res = np.repeat(res[...,None],3,2)
         #return res
         try:
-            im = cv2.imread(str(fn), flags).astype(np.float32)/255
+            if str(fn).startswith("http"):
+                req = urllib.urlopen(str(fn))
+                image = np.asarray(bytearray(resp.read()), dtype="uint8")
+                im = cv2.imdecode(image, flags).astype(np.float32)/255
+            else:
+                im = cv2.imread(str(fn), flags).astype(np.float32)/255
             if im is None: raise OSError(f'File not recognized by opencv: {fn}')
             return cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         except Exception as e:
@@ -298,6 +304,7 @@ class ArraysNhotDataset(ArraysDataset):
 
 
 class ModelData():
+    """Encapsulates DataLoaders and Datasets for training, validation, test. Base class for fastai *Data classes."""
     def __init__(self, path, trn_dl, val_dl, test_dl=None):
         self.path,self.trn_dl,self.val_dl,self.test_dl = path,trn_dl,val_dl,test_dl
 
@@ -370,7 +377,10 @@ class ImageData(ModelData):
                 test_lbls = test[1]
                 test = test[0]
             else:
-                test_lbls = np.zeros((len(test),1))
+                if len(trn[1].shape) == 1:
+                    test_lbls = np.zeros((len(test),1))
+                else:
+                    test_lbls = np.zeros((len(test),trn[1].shape[1]))
             res += [
                 fn(test, test_lbls, tfms[1], **kwargs), # test
                 fn(test, test_lbls, tfms[0], **kwargs)  # test_aug
@@ -451,6 +461,8 @@ class ImageClassifierData(ImageData):
         Returns:
             ImageClassifierData
         """
+        assert not (tfms[0] is None or tfms[1] is None), "please provide transformations for your train and validation sets"
+        assert not (os.path.isabs(folder)), "folder needs to be a relative path"
         fnames,y,classes = csv_source(folder, csv_fname, skip_header, suffix, continuous=continuous)
         return cls.from_names_and_array(path, fnames, y, classes, val_idxs, test_name,
                 num_workers=num_workers, suffix=suffix, tfms=tfms, bs=bs, continuous=continuous)

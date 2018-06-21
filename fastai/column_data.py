@@ -23,9 +23,9 @@ class PassthruDataset(Dataset):
 class ColumnarDataset(Dataset):
     def __init__(self, cats, conts, y, is_reg, is_multi):
         n = len(cats[0]) if cats else len(conts[0])
-        self.cats = np.stack(cats, 1).astype(np.int64) if cats else np.zeros((n,1))
+        self.cats  = np.stack(cats,  1).astype(np.int64)   if cats  else np.zeros((n,1))
         self.conts = np.stack(conts, 1).astype(np.float32) if conts else np.zeros((n,1))
-        self.y = np.zeros((n,1)) if y is None else y
+        self.y     = np.zeros((n,1))                       if y is None else y
         if is_reg:
             self.y =  self.y[:,None]
         self.is_reg = is_reg
@@ -63,9 +63,10 @@ class ColumnarModelData(ModelData):
 
     @classmethod
     def from_data_frames(cls, path, trn_df, val_df, trn_y, val_y, cat_flds, bs, is_reg, is_multi, test_df=None):
-        test_ds = ColumnarDataset.from_data_frame(test_df, cat_flds, None, is_reg, is_multi) if test_df is not None else None
-        return cls(path, ColumnarDataset.from_data_frame(trn_df, cat_flds, trn_y, is_reg, is_multi),
-                    ColumnarDataset.from_data_frame(val_df, cat_flds, val_y, is_reg, is_multi), bs, test_ds=test_ds)
+        trn_ds  = ColumnarDataset.from_data_frame(trn_df,  cat_flds, trn_y, is_reg, is_multi)
+        val_ds  = ColumnarDataset.from_data_frame(val_df,  cat_flds, val_y, is_reg, is_multi)
+        test_ds = ColumnarDataset.from_data_frame(test_df, cat_flds, None,  is_reg, is_multi) if test_df is not None else None
+        return cls(path, trn_ds, val_ds, bs, test_ds=test_ds)
 
     @classmethod
     def from_data_frame(cls, path, val_idxs, df, y, cat_flds, bs, is_reg=True, is_multi=False, test_df=None):
@@ -140,7 +141,9 @@ class StructuredLearner(Learner):
 
     def _get_crit(self, data): return F.mse_loss if data.is_reg else F.binary_cross_entropy if data.is_multi else F.nll_loss
 
-    def summary(self): return model_summary(self.model, [(self.data.trn_ds.cats.shape[1], ), (self.data.trn_ds.conts.shape[1], )])
+    def summary(self):
+        x = [torch.ones(3, self.data.trn_ds.cats.shape[1], dtype=torch.int64), torch.rand(3, self.data.trn_ds.conts.shape[1])]
+        return model_summary(self.model, x)
 
 
 class StructuredModel(BasicModel):
@@ -212,6 +215,8 @@ class CollabFilterLearner(Learner):
         super().__init__(data, models, **kwargs)
 
     def _get_crit(self, data): return F.mse_loss
+
+    def summary(self): return model_summary(self.model, [torch.ones(3, dtype=torch.int64), torch.ones(3, dtype=torch.int64)])
 
 
 class CollabFilterModel(BasicModel):

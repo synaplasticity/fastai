@@ -73,6 +73,9 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+# AsciiDoc documentation
+docs/fastai/
+
 # PyBuilder
 target/
 
