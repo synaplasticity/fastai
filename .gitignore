@@ -1,6 +1,9 @@
 *.bak
 *.log
-submission1.csv
+*submission*.*csv
+/**/*.csv
+*.orig
+/**/*.orig
 *~
 .~*
 .pypirc
