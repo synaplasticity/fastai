@@ -10,17 +10,148 @@ Note that the top-most release is changes in the unreleased master branch on
 Github. Parentheses after an item show the name or github id of the contributor
 of that change.
 
-## 1.0.20.dev0 (Work In Progress)
+
+
+
+
+## 1.0.28.dev0 (Work In Progress)
 
 ### New:
-
-- `DataBunch.dl` replaces the various `holdout`, `is_test`, and `is_train` approaches with a single consistent enum.
 
 ### Changed:
 
 ### Fixed:
 
 
+
+## 1.0.27 (2018-11-17)
+
+### New:
+
+### Changed:
+
+- ItemLists can now set `self.filter_missing_y` to automatically remove items
+  from LabelLists  training set that can't be labeled
+
+### Fixed:
+
+
+## 1.0.26 (2018-11-16)
+
+### New:
+
+- xxmaj token and new `deal_caps` rule
+
+### Changed:
+
+- `Tokenizer` has `pre_rules` and `post_rules` now (for before and after tokenization)
+- `mark_fields` is now default to `False`
+
+
+## 1.0.25 (2018-11-16)
+
+### New:
+
+- `FloatList` to do regression
+- Use of real neural nets in `collab`
+
+### Changed:
+
+- Remove `TextFilesList` as you can now use `TextList` instead
+- Consistent use of `cols` / `col` in the data block API depending on if you can pass multiple columns or not
+- Collab is refactored with the data block API behind the scene
+- `get_collab_learner` and `get_tabular_learner` become `collab_learner` and
+  `tabular_learner` for name harmonization accross applications
+- `get_embedding` becomes `embedding`
+- `ImageDeleter` and `ImageRelabeler` are merged into `ImageCleaner`
+
+### Fixed:
+
+- `show_batch` works with `rows=1` 
+- Pretrained language models are saved in the correct folder (.fastai/models/)
+- Splitting too slow in the data block API
+- Mixup losses work with predict and TTA (thanks to bharadwaj6)
+- Wrong size for the added test set in the data block API (thanks to wdhorton)
+- Fix to the QRNN (thanks to PiotrCzapla)
+
+## 1.0.24 (2018-11-13)
+
+- No changes
+
+## 1.0.23 (2018-11-13)
+
+### New:
+
+- `Learner.predict` works accross applications
+- `Learner.show_batch` works accross applications
+
+### Changed:
+
+- `tools/build-docs` and `tools/update-nbs` scripts combined into one script.
+- Big refactor of the data block API
+
+### Fixed:
+
+- `download_images` works with different kind of suffixes (thanks to fpingham)
+
+
+## 1.0.22 (2018-11-09)
+
+### Breaking changes:
+
+- We no longer import submodule names automatically with `import *`
+- Callbacks are now inside the `callbacks` namespace if you `from fastai import *`
+
+### Changed:
+
+- All the `DataBunch` factory method use the data block API, the factory method of `Datasets` are deprecated and will be removed in a future version.
+
+### Fixed:
+
+- `learn.predict` fixed
+- wrong dimension in dice (thanks to noklam)
+
+## 1.0.21 (2018-11-08)
+
+### New:
+
+- `CSVLogger` callback (thanks to devorfu)
+- Initial support for image regression problems.
+- If a dataset class has `learner_type` then `create_cnn` uses that type to create the `Learner`.
+- Introduce TaskType in `DatasetBase` to deal with single/multi-class or regression problems accross applications.
+
+### Changed:
+
+- `datasets()` now can automatically figure out what class to use in many situations
+- `download_images()` now saves images with their original extensions
+
+
+## 1.0.20 (2018-11-07)
+
+### New:
+
+- `DataBunch.dl` replaces the various `holdout`, `is_test`, and `is_train` approaches with a single consistent enum.
+- `fastai.text` is fully compatible with the data block API.
+
+### Changed:
+
+- `download_url` reads the get request with `iter_content` which is robust to 'content-length' errors. (thanks to Francisco Ingham and Zach Caceres)
+- `download_url` has a timeout
+
+### Fixed:
+
+- `create_cnn` correctly calculates # features in body correctly for more architectures
+- `TextDataset` has now two subclasses for the preprocessing steps and doesn't do that preprocesing automatically.
+- `TextDataBunch` doesn't save the result of preprocessing automatically, you have to use `TextDataBunch.save`.
+- `RNNLearner.classifier` is now `text_classifier_learner` and `RNN_Learner.language_model` is now `language_model_learner`.
+- `pil2tensor` is faster and works on more image types (thanks to kasparlund)
+- Imports in the file picker widget (thanks to Hiromi)
+- Batches of size 1 will be removed during training because of the issue with BatchNorm1d
+- Confusion matrix show ints if `normalize=False` (default)
+- `RNNLearner.get_preds` return the preds in the right order (thanks to StatisticDean)
+- `num_features_model` now works with any model
+- `resize_method` wasn't properly set when passed to `ImageDataBunch`
+- `reset` the RNNs at the beginning of each epoch in `RNNTrainer`
 
 ## 1.0.19 (2018-11-03)
 
