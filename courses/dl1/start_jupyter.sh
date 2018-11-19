@@ -1,4 +1,4 @@
 #!/bin/sh
 source activate fastai
-jupyter notebook
+jupyter notebook --port=8889
 source deactivate
