@@ -1,0 +1,11 @@
+Goal:
+* Create a subset (x percentage) of files randomly from a 
+given file dataset
+
+Input:
+* file dataset list
+* percentage of the dataset to be used to create subset
+
+Steps:
+* Randomly create x percentage subset from the given files 
+* Return files subset 
