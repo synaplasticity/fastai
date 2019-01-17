@@ -11,7 +11,6 @@ def get_filelist(file_dataset, perc):
 
 def get_files_from_dir(dir_abs_path):
     files = [f for f in listdir(dir_abs_path) if path.isfile(path.join(dir_abs_path, f))]
-    print(files)
     return files
 
 
