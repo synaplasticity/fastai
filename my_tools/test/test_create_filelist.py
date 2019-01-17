@@ -1,4 +1,6 @@
-from os import listdir, getcwd
+import pytest
+from os import listdir, getcwd, mkdir, rmdir
+from shutil import rmtree
 
 from my_tools.create_filelist import get_filelist, get_files_from_dir, create_subset
 
@@ -27,7 +29,20 @@ def test_get_files_from_dir():
     assert get_files_from_dir('.')
 
 
-def test_create_sub_sample_20_perc():
+@pytest.fixture
+def setup_file_datasets():
+    inp_ds = '/home/vinod/programming/DL/fastai/my_tools/test/tmp'
+    mkdir('tmp')
+    mkdir('tmp/out')
+    for i in range(0, 5):
+        open(f'{inp_ds}/file{i}.txt', 'a').close()
+
+    yield setup_file_datasets()
+    print("Tearing down ...")
+    rmtree(inp_ds, onerror=True)
+
+
+def test_create_sub_sample_20_perc(setup_file_datasets):
     inp_ds = '/home/vinod/programming/DL/fastai/my_tools/test/tmp'
     out_ds = '/home/vinod/programming/DL/fastai/my_tools/test/tmp/out'
     create_subset(inp_ds, out_ds, 20)
