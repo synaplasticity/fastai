@@ -31,19 +31,21 @@ def test_get_files_from_dir():
 
 @pytest.fixture
 def setup_file_datasets():
-    inp_ds = '/home/vinod/programming/DL/fastai/my_tools/test/tmp'
+    inp_ds = 'tmp'
+    out_ds = 'tmp/out'
+
     mkdir('tmp')
     mkdir('tmp/out')
     for i in range(0, 5):
         open(f'{inp_ds}/file{i}.txt', 'a').close()
+    setup_file_datasets = [inp_ds, out_ds]
 
-    yield setup_file_datasets()
+    yield setup_file_datasets
     print("Tearing down ...")
     rmtree(inp_ds, onerror=True)
 
 
 def test_create_sub_sample_20_perc(setup_file_datasets):
-    inp_ds = '/home/vinod/programming/DL/fastai/my_tools/test/tmp'
-    out_ds = '/home/vinod/programming/DL/fastai/my_tools/test/tmp/out'
+    inp_ds, out_ds = setup_file_datasets
     create_subset(inp_ds, out_ds, 20)
     assert len(listdir(out_ds)) is 1
