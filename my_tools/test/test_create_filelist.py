@@ -29,6 +29,10 @@ def test_get_files_from_dir():
     assert get_files_from_dir('.')
 
 
+def test_get_files_from_dir_ignore_excludedlist():
+    assert 'Thumbs.db' not in get_files_from_dir('.')
+
+
 @pytest.fixture
 def setup_file_datasets():
     inp_ds = 'tmp'

@@ -10,7 +10,8 @@ def get_filelist(file_dataset, perc):
 
 
 def get_files_from_dir(dir_abs_path):
-    files = [f for f in listdir(dir_abs_path) if path.isfile(path.join(dir_abs_path, f))]
+    exclude_files = ['Thumbs.db']
+    files = [f for f in listdir(dir_abs_path) if path.isfile(path.join(dir_abs_path, f)) and f not in exclude_files]
     return files
 
 
