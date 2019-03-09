@@ -8,6 +8,7 @@ import sys
 def get_filelist(file_dataset, perc):
     sample_size = round(len(file_dataset) * (perc/100))
     print(f'len : {len(file_dataset)}, size: {sample_size}')
+    print(f'files : {file_dataset[:10]}')
     return [ file_dataset[i] for i in random.sample(range(len(file_dataset)), sample_size) ]
 
 
