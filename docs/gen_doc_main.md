@@ -4,82 +4,79 @@ title: Doc Maintenance
 
 ## Process for contributing to the docs
 
-If you want to help us and contribute to the docs, you just have to make modifications to the source notebooks, our scripts will then automatically convert them to HTML. There is just one script to run after cloning the fastai repo, to ensure that everything works properly. The rest of this page goes more in depth about all the functionalities this module offers, but if you just want to add a sentence or correct a typo, make a PR with the notebook changed and we'll take care of the rest.
+Here is how you can contribute to the `fastai` documentation:
 
-### Thing to run after git clone
+### Step 1. Create a `fastai` git branch
 
-Make sure you follow this recipe:
+The process of creating a branch (with a fork), including a program that will do it for you in one step, and submitting the PR is explained in details in [How to Make a Pull Request (PR)](https://docs.fast.ai/dev/git.html#how-to-make-a-pull-request-pr)
 
-    git clone https://github.com/fastai/fastai
-    cd fastai
-    tools/run-after-git-clone
+### Step 2. Setup
 
-This will take care of everything that is explained in the following two sections. We'll tell you what they do, but you need to execute just this one script.
+From the fastai repo or your forked branch, install the required developer modules:
 
-Note: windows users, not using bash emulation, will need to invoke the command as:
-
-    python tools\run-after-git-clone
+```bash
+pip install -e ".[dev]"
+```
 
 If you're on windows, you also need to convert the Unix symlink between `docs_src\imgs` and `docs\imgs`. You will need to (1) remove `docs_src\imgs`, (2) execute `cmd.exe` as administrator, and (3) finally, in the `docs_src` folder, execute:
 
-    mklink /d imgs ..\docs\imgs
+```bash
+cd docs_src
+mklink /d imgs ..\docs\imgs
+```
 
-#### after-git-clone #1: a mandatory notebook strip out
+If you followed the fastai-specific instructions explained [here](https://docs.fast.ai/dev/git.html#how-to-make-a-pull-request-pr), you're all set. If you made a PR branch in some other way, it's crucial that you execute:
 
-Currently we only store `source` code cells under git (and a few extra fields for documentation notebooks). If you would like to commit or submit a PR, you need to confirm to that standard.
+```bash
+tools/run-after-git-clone  # or python tools\run-after-git-clone on windows
+```
 
-This is done automatically during `diff`/`commit` git operations, but you need to configure your local repository once to activate that instrumentation.
+in that branch once. You can read more about it [here](https://docs.fast.ai/dev/develop.html#things-to-run-after-git-clone).
 
-Therefore, your developing process will always start with:
+### Step 3. Edit the documents
 
-    tools/trust-origin-git-config
+There are two types of source files: `*ipynb` and `*md` files.
 
-The last command tells git to invoke configuration stored in `fastai/.gitconfig`, so your `git diff` and `git commit` invocations for this particular repository will now go via `tools/fastai-nbstripout` which will do all the work for you.
+1. `*ipynb` notebook files, located under the directory `docs_src`, are the sources for most of the `*html` files on [docs.fast.ai](https://docs.fast.ai/). For example, [https://docs.fast.ai/data_block.html](https://docs.fast.ai/data_block.html) is generated from the [docs_src/data_block.ipynb](https://github.com/fastai/fastai/blob/master/docs_src/data_block.ipynb).
 
-You don't need to run it if you run:
+   While you can use a normal editor for editing this type of files, it's difficult to edit `json`-format files and it's very easy to break them. Instead edit `*ipynb` files by opening them in your jupyter notebook environment.
 
-    tools/run-after-git-clone
+   If you were using a text editor to make changes, when you are done working on a notebook improvement, please, make sure to validate that notebook's format, by simply loading it in the jupyter notebook.
 
-If you skip this configuration your commit/PR involving notebooks will not be accepted, since it'll carry in it many JSON bits which we don't want in the git repository. Those unwanted bits create collisions and lead to unnecessarily complicated and time wasting merge activities. So please do not skip this step.
+   When you finish editing a notebook, remember to save it before doing `git commit`!
 
-Note: we can't make this happen automatically, since git will ignore a repository-stored `.gitconfig` for security reasons, unless a user will tell git to use it (and thus trust it).
+   You don't need to convert your work to HTML, we will do it after your PR is accepted and merged.
 
-If you'd like to check whether you already trusted git with using `fastai/.gitconfig` please look inside `fastai/.git/config`, which should have this entry:
+   **Note**: jupyter lab is currently not supported. If you missed this warning and have already edited `.ipynb` files in jupyter lab, you can [fix them](https://docs.fast.ai/dev/develop.html#unstripped-notebook-repair).
 
-    [include]
-            path = ../.gitconfig
+2. `*md` text files, located at `docs/*.md` and `docs/*/*.md` require no jupyter environment - i.e. they contain plain text formatted using the `markdown` format. Note, that unlike `*ipynb`, these are located in the `docs` directory. For example,  [https://docs.fast.ai/troubleshoot.html](https://docs.fast.ai/troubleshoot.html)'s source is [docs/troubleshoot.md](https://github.com/fastai/fastai/blob/master/docs/troubleshoot.md).
 
-or alternatively run:
+   Edit these files in your editor. To validate the markdown use [grip](https://github.com/joeyespo/grip) or any other markdown rendering/validating tool of your liking.
 
-    tools/trust-origin-git-config -t
+Do not edit the `docs/*html` files - those are autogenerated and if you change those, your changes will get overwritten.
 
-#### after-git-clone #2: automatically updating doc notebooks to be trusted on git pull
+### Step 4. Submit a PR with your changes
 
-We want the doc notebooks to be already trusted when you load them in `jupyter notebook`, so this script which should be run once upon `git clone`, will install a `git` `post-merge` hook into your local check out.
+See [Submit Your PR](https://docs.fast.ai/dev/git.html#step-7-submit-your-pr).
 
-The installed hook will be executed by git automatically at the end of `git pull` only if it triggered an actual merge event and that the latter was successful.
+### How the docs are created - a Visual diagram
 
-To trust run:
+To help you understand better the documentation creation process, here is a diagram of stages each type of a document goes through after it has been edited and before the changes appear on the website:
 
-    tools/trust-doc-nbs-install-hook
+```txt
+1. edit    2. tools/build-docs  3. jekyll (githubpages)
+     |            |                   |
+docs_src/*.ipynb ----> docs/*.html -----> docs.fast.ai/*html
+docs/*.md ------------------------------> docs.fast.ai/*html
+```
 
-You don't need to run it if you run:
+At the end of stages 1 and 2 `git commit` and `git push` are needed, the 3rd stage happens automatically. `*md` files require no stage 2.
 
-    tools/run-after-git-clone
+So once your PR is merged, we rebuild the docs (using `tools/build-docs`) and then when we commit the rebuilt docs, githubpages usually updates the website automatically within a few minutes. Therefore, if you see that your changes aren't visible on the website, despite your PR being merged, it's because the seconds stage hasn't been done. It happens once a day or so, so please be patient.
 
-To distrust run:
+If you find this section's instructions unclear or difficult to follow, please, kindly let us know in this [thread](https://forums.fast.ai/t/documentation-improvements/32550), so that we could improve them.
 
-    rm .git/hooks/post-merge
-
-### Validate any notebooks you're contributing to
-
-If you were using a text editor to make changes, when you are done working on a notebook improvement, please, make sure to validate that notebook's format, by simply loading it in the jupyter notebook.
-
-Alternatively, you could use a CLI JSON validation tool, e.g. [jsonlint](https://jsonlint.com/):
-
-    jsonlint-php example.ipynb
-
-but it's second best, since you may have a valid JSON, but invalid notebook format, as the latter has extra requirements on which fields are valid and which are not.
+The rest of this document goes more in depth about all the documentation generation functionalities. You don't need to read or understand any of it to make a successful contribution to the existing documents. If you just want to add some text or correct a typo, make a PR with the notebook changed and we'll take care of the rest.
 
 ## Syncing added/updated API with docs
 
@@ -90,7 +87,8 @@ The bulk of the process and setup are explained in [gen_doc.gen_notebooks](/gen_
 ### Prerequisites
 
 Install the prerequisites:
-```
+
+```bash
 pip install -e ".[dev]"
 ```
 
@@ -100,29 +98,28 @@ Install the `Hide Input` jupyter notebook extension:
 2. go to `http://localhost:8888/nbextensions`
 3. enable the `Hide Input` extension
 
-
 ### Initial Synchronization
 
 Let's say we want to do some changes to the docs for `data_block.py`:
 
 First, run an update to sync any API changes that happened before your work, but not synchronized with the docs - the code is usually ahead of the docs and the docs don't get updated all the time:
 
-```
+```bash
 tools/build-docs --update-nb-links  docs_src/data_block.ipynb
 ```
+
 Assuming the build was successful, commit the changes.
 
 While you don't have to do this first, it's very helpful, since now when you re-run the build you will be able to see only the changes you introduced and not potentially hundreds of changes that have nothing to do with your modifications.
 
 Now, you can start working on the docstrings of the new or updated functions and classes, and extra prose that you'd like to add to the documentation.
 
-
 ### Adding a new function/class
 
 Say you added a method to `data_block.py`:
 
-```
-def def foobar(self, times:int=1)->'str':
+```python
+def foobar(self, times:int=1)->'str':
     "This functions returns FooBar * times"
     return "FooBar" * times
 ```
@@ -133,7 +130,7 @@ Any extra notes should be placed inside the corresponding entry in `.ipynb` and 
 
 Now run:
 
-```
+```bash
 tools/build-docs --document-new-fns docs_src/data_block.ipynb
 ```
 
@@ -141,9 +138,10 @@ and if you now load `docs_src/data_block.ipynb` in jupyter notebook and scroll d
 
 Take that cell and move it up to where it belong in the document, most likely in the same position it's found in the source code `.py` file. Note that if you select this cell and hit `Toggle cell input display` (the `Hide Input` extension) in the menu, you will see something like:
 
-```
+```python
 show_doc(LabelLists.foobar)
 ```
+
 If something is not displayed correctly, lookup the [show_doc](/gen_doc.nbdoc.html#show_doc) function, where you can adjust the arguments to make things look right. For example, you can pass `full_name='foobar'` argument to adjust a function name (usually helpful with functions that start with `_`, or you can pass `title_level=3` if you want it to show up at a header level 3.
 
 When you're done tweaking the `show_doc(...)` input for that entry, remember to hit again the `Toggle cell input display` button to make it invisible, so that in the final docs site it's not displayed but the functionality generated by it does.
@@ -152,7 +150,7 @@ If you need to add any extra comments, example or instructions, create one or mo
 
 When satisfied, first make sure to save the notebook (since it auto-saves only every few minutes), and then convert this notebook into html with:
 
-```
+```bash
 tools/build-docs docs_src/data_block.ipynb
 ```
 
@@ -160,50 +158,58 @@ It can be a good idea to run `git diff` to check your changes, but it might be t
 
 Finally, commit the modified `.ipynb` and the corresponding `.html` file:
 
-```
+```bash
 git commit docs_src/data_block.ipynb docs/data_block.html
 ```
+
 and then push the changes into the repo.
 
 Several minutes after the push you will see the updated documents at https://docs.fast.ai/data_block.html.
-
 
 ### Updating an existing function/class
 
 To take care of updating any changes in the API's arguments and docstrings that are already in the API docs, execute (we are using `data_block` as an example here):
 
-```
+```bash
 tools/build-docs --update-nb-links docs_src/data_block.ipynb
 ```
 
 and then as in the previous section, check the diff, commit and push.
 
-
 ### Creating a new documentation notebook from existing module
 
-If a fastai.* module already exists but there is no associated documentation notebook (docs_src/*.ipynb), you can generate one by running the following:
+If a `fastai.*` python module already exists, but there is no associated documentation notebook (`docs_src/*.ipynb`), you can auto-generate one by running the following:
 
-```
+```bash
 tools/build-docs fastai.subpackage.module
 ```
 
 This will create a skeleton documentation notebook - `docs_src/subpackage.module.ipynb`. It will populate with all the module methods. These will need to be documented.
 
+Do note that if you want to change the default header levels (e.g. h3 or h2 instead of h2), you can adjust them with an explicit `title_level` argument in the corresponding `show_doc()` entry. For example:
+
+```
+show_doc(...., title_level=4)
+```
+See the documentation for [show_doc](/gen_doc.nbdoc.html#show_doc) for more options.
+
 ### Borked rendering
 
 If after `git pull` you load, e.g. `docs_src/data_block.ipynb` in jupyter notebook and you get a bunch of cryptic entries like:
 
-```
+```python
 <IPython.core.display.Markdown object>
 <IPython.core.display.Markdown object>
 <IPython.core.display.Markdown object>
 ```
+
 instead of the API documentation entries, executing:
-```
+
+```bash
 tools/build-docs --update-nb-links docs_src/data_block.ipynb
 ```
-and then reloading the notebook fixes the problem.
 
+and then reloading the notebook fixes the problem.
 
 ## Building the documentation website
 
@@ -213,7 +219,6 @@ The https://docs.fast.ai website is comprised from documentation notebooks conve
 * the sidebar and other jekyll templates under `docs/_data/` are automatically deployed by github pages (requires no extra action)
 * changes in jekyll metadata require a rebuild of the affected notebooks
 * changes in `.ipynb` nbs require a rebuild of the affected notebooks
-
 
 ### Updating sidebar
 
@@ -227,7 +232,8 @@ The https://docs.fast.ai website is comprised from documentation notebooks conve
 ### Updating notebook metadata
 
 In order to pass the right settings to the website version of the `docs`, each notebook has a custom entry which if you look at the source code, looks like:
-```
+
+```json
  "metadata": {
   "jekyll": {
    "keywords": "fastai",
@@ -236,10 +242,10 @@ In order to pass the right settings to the website version of the `docs`, each n
   },
   [...]
 ```
+
 Do not edit this entry manually, or your changes will be overwritten in the next metadata update.
 
 The only correct way to change any notebook's metadata is by opening `docs_src/jekyll_metadata.ipynb`, finding the notebook you want to change the metadata for, changing it, and running the notebook, then saving and committing it and the resulting changes.
-
 
 ### Updating notebooks
 
@@ -247,46 +253,60 @@ Use this section only when you have added a new function that you want to docume
 
 Here is how to build/update the documentation notebooks to reflect changes in the library.
 
+For most cases, run the full doc sync (which also updates the [test registry](dev/test.html#test-registry)):
 
-To update all modified notebooks under `docs_src` run:
+```bash
+make docs
+```
+
+To update only the modified notebooks under `docs_src` run:
+
 ```bash
 python tools/build-docs
 ```
 
 To update specific `*ipynb` nbs:
+
 ```bash
 python tools/build-docs docs_src/notebook1.ipynb docs_src/notebook2.ipynb ...
 ```
 
 To update specific `fastai.*` module:
+
 ```bash
 python tools/build-docs fastai.subpackage1.module1 fastai.subpackage2.module2 ...
 ```
 
 To force a rebuild of all notebooks and not just the modified ones, use the `-f` option.
+
 ```bash
 python tools/build-docs -f
 ```
 
 To scan a module and add any new module functions to documentation notebook:
+
 ```bash
 python tools/build-docs --document-new-fns
 ```
 
 To automatically append new fastai methods to their corresponding documentation notebook:
+
 ```bash
 python tools/build-docs --update-nb-links
 ```
+
 Use the `-h` for more options.
 
 Alternatively, [`update_notebooks`](/gen_doc.gen_notebooks.html#update_notebooks) can be run from the notebook.
 
 To update all notebooks under `docs_src` run:
+
 ```python
 update_notebooks('.')
 ```
 
 To update specific python file only:
+
 ```python
 update_notebooks('gen_doc.gen_notebooks.ipynb', update_nb=True)
 ```
@@ -294,13 +314,14 @@ update_notebooks('gen_doc.gen_notebooks.ipynb', update_nb=True)
 `update_nb=True` inserts newly added module methods into the docs that haven't already been documented.
 
 Alternatively, you can update a specific module:
+
 ```python
 update_notebooks('fastai.gen_doc.gen_notebooks', dest_path='fastai/docs_src')
 ```
 
 ### Updating html only
 
-If you are not syncronizing the code base with its documentation, but made some manual changes to the documentation notebooks, then you don't need to update the notebooks, but just convert them to `.html`:
+If you are not synchronizing the code base with its documentation, but made some manual changes to the documentation notebooks, then you don't need to update the notebooks, but just convert them to `.html`:
 
 To convert `docs_src/*ipynb` to `docs/*html`:
 
@@ -335,7 +356,7 @@ After committing the new changes, first, wait a few minutes for github pages to 
 
 Then, do:
 
-```
+```bash
 cd tools/checklink
 ./checklink-docs.sh
 ```
@@ -347,7 +368,8 @@ Remember, that it's testing the live website, so if you detect problems and make
 You can also test the site locally before committing your changes, please see: [README](https://github.com/fastai/fastai/blob/master/tools/checklink/README.md).
 
 To test the course-v3.fast.ai site, do:
-```
+
+```bash
 ./checklink-course-v3.sh
 ```
 
@@ -357,14 +379,16 @@ To test the course-v3.fast.ai site, do:
 
 If you work on markdown (.md) files it helps to be able to validate your changes so that the resulting layout is not broken. [grip](https://github.com/joeyespo/grip) seems to work quite well for this purpose (`pip install grip`). For example:
 
-```
+```bash
 grip -b docs/dev/release.md
 ```
-will open a browser with the rendered markdown as html - it uses github API, so this is exacly how it'll look on github once you commit it. And here is a handy alias:
 
-```
+will open a browser with the rendered markdown as html - it uses github API, so this is exactly how it'll look on github once you commit it. And here is a handy alias:
+
+```bash
 alias grip='grip -b'
 ```
+
 so you don't need to remember the flag.
 
 ### Markdown Tips
@@ -376,18 +400,42 @@ so you don't need to remember the flag.
 
 Install prerequisites:
 
-```
-sudo apt install ruby-bundler
-```
-When running this one it will ask for your user's password (basically running a sudo operation):
-```
-bundle install jekyll
-```
+* Debian/Ubuntu:
+
+   ```bash
+   sudo apt install ruby-bundler
+   ```
+
+   When running this one it will ask for your user's password (basically running a sudo operation):
+
+   ```bash
+   bundle install jekyll
+   ```
+
+* Mac OS:
+
+   ```
+   gem install bundler
+   cd docs
+   bundle install
+   ```
 
 Start the website:
-```
+
+```bash
 cd docs
 bundle exec jekyll serve
 ```
 
 it will tell you which localhost url to go to to see the site.
+
+
+## Cleanups
+
+Check whether we have any `doc/*html` orphans that no longer have `docs_src/*ipynb` source files:
+
+```bash
+perl -le 'm#docs/(.*?)\.html# && !-e "docs_src/$1.ipynb" && print for @ARGV' docs/*html
+```
+
+and remove them from git.
