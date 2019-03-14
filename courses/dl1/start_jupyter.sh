@@ -1,4 +1,6 @@
 #!/bin/sh
-source activate fastai
+
+cd ~/fastai/courses/dl1
+#jupyter notebook --no-browser --port=8889 --NotebookApp.allow_remote_access=True
 jupyter notebook --port=8889
-source deactivate
+
